@@ -1,4 +1,4 @@
-<h2>Game Wordle : {{ randomWord }}</h2>
+<h1>WORDLE ANGULAR</h1>
 
 <div *ngFor="let row of guesses; let rowIndex = index" class="letterRow row-{{ rowIndex }}">
   <ng-container *ngFor="let letter of row; let colIndex = index">
@@ -14,3 +14,4 @@
   </ng-container>
 </div>
 
+<p>{{ randomWord }}</p>

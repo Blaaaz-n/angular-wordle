@@ -1,9 +1,86 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f1f1f1;
-    color: #1a1a1a;
-    margin: 15;
-    padding: 20px;
-    justify-content: center;
-    align-items: center;
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #121213;
+  color: #e2e2e2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 40px 16px;
+  box-sizing: border-box;
+}
+
+h1 {
+  font-size: 42px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 6px;
+  color: #000000;
+  margin-bottom: 40px;
+  text-align: center;
+  padding-bottom: 12px;
+}
+
+.letterRow {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.letter-cell {
+  width: 64px;
+  height: 64px;
+  margin: 4px;
+  font-size: 32px;
+  font-weight: bold;
+  text-transform: uppercase;
+  text-align: center;
+  border: 2px solid #d3d6da;
+  background-color: #ffffff;
+  color: #000000;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s;
+  border-radius: 4px;
+}
+
+.correct {
+  background-color: #6aaa64;
+  border-color: #6aaa64;
+  color: white;
+}
+
+.present {
+  background-color: #c9b458;
+  border-color: #c9b458;
+  color: white;
+}
+
+.absent {
+  background-color: #787c7e;
+  border-color: #787c7e;
+  color: white;
+}
+
+.correct, .present, .absent {
+  animation: flip 0.3s ease-in-out;
+}
+
+@keyframes flip {
+  0% { transform: rotateX(0); }
+  50% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0); }
+}
+
+@media (max-width: 500px) {
+  .letter-cell {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+    margin: 3px;
+  }
+
+  h1 {
+    font-size: 28px;
+    letter-spacing: 3px;
+  }
 }
