@@ -1,1 +1,16 @@
-<p>Game Wordle : {{ randomWord }}</p>
+<h2>Game Wordle : {{ randomWord }}</h2>
+
+<div *ngFor="let row of guesses; let rowIndex = index" class="letterRow row-{{ rowIndex }}">
+  <ng-container *ngFor="let letter of row; let colIndex = index">
+    <input
+      class="letter-cell"
+      maxlength="1"
+      [value]="guesses[rowIndex][colIndex]"
+      [readonly]="rowIndex !== currentRow || gameWon"
+      [ngClass]="statuses[rowIndex][colIndex]"
+      (input)="onInput($event, rowIndex, colIndex)"
+      (keydown)="onKeyDown($event, rowIndex, colIndex)"
+      (keydown.enter)="rowIndex === currentRow && checkWordExists()" />
+  </ng-container>
+</div>
+
