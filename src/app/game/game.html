@@ -1,17 +1,126 @@
-<h1>WORDLE ANGULAR</h1>
+<!-- Clean Header -->
+<header class="game-header">
+  <div class="header-content">
+    <h1>WORDLE</h1>
+    <div class="header-actions">
+      <button class="action-btn theme-btn" (click)="toggleTheme()" [attr.aria-label]="'Switch to ' + (currentTheme === 'dark' ? 'light' : 'dark') + ' theme'">
+        <span class="icon">{{ currentTheme === 'dark' ? '☀️' : '🌙' }}</span>
+      </button>
+      <button class="action-btn stats-btn" (click)="toggleStats()" aria-label="Show statistics">
+        <span class="icon">📊</span>
+      </button>
+      <button class="action-btn new-game-btn" (click)="newGame()" aria-label="New game">
+        <span class="icon">🔄</span>
+      </button>
+    </div>
+  </div>
+</header>
 
-<div *ngFor="let row of guesses; let rowIndex = index" class="letterRow row-{{ rowIndex }}">
-  <ng-container *ngFor="let letter of row; let colIndex = index">
-    <input
-      class="letter-cell"
-      maxlength="1"
-      [value]="guesses[rowIndex][colIndex]"
-      [readonly]="rowIndex !== currentRow || gameWon"
-      [ngClass]="statuses[rowIndex][colIndex]"
-      (input)="onInput($event, rowIndex, colIndex)"
-      (keydown)="onKeyDown($event, rowIndex, colIndex)"
-      (keydown.enter)="rowIndex === currentRow && checkWordExists()" />
-  </ng-container>
+<!-- Simple Loading -->
+<div *ngIf="isLoading()" class="loading">
+  <div class="spinner"></div>
+  <p>Loading...</p>
 </div>
 
-<p>{{ randomWord }}</p>
+<!-- Game board -->
+<div *ngIf="!isLoading()" class="game-board">
+  <div *ngFor="let row of guesses; let rowIndex = index" class="letterRow row-{{ rowIndex }}">
+    <ng-container *ngFor="let letter of row; let colIndex = index">
+      <input
+        class="letter-cell"
+        maxlength="1"
+        [value]="guesses[rowIndex][colIndex]"
+        [readonly]="rowIndex !== currentRow || gameWon || gameLost"
+        [ngClass]="statuses[rowIndex][colIndex]"
+        [attr.aria-label]="'Letter ' + (colIndex + 1) + ' in row ' + (rowIndex + 1)"
+        (input)="onInput($event, rowIndex, colIndex)"
+        (keydown)="onKeyDown($event, rowIndex, colIndex)" />
+    </ng-container>
+  </div>
+</div>
+
+<!-- Game Results -->
+<div *ngIf="gameWon" class="result-message success">
+  <div class="result-icon">🎉</div>
+  <h2>Well Done!</h2>
+  <p>You solved it in {{ currentRow + 1 }} guesses</p>
+  <div class="result-actions">
+    <button class="btn btn-primary" (click)="shareResult()">Share</button>
+    <button class="btn btn-secondary" (click)="newGame()">Play Again</button>
+  </div>
+</div>
+
+<div *ngIf="gameLost" class="result-message failure">
+  <div class="result-icon">😔</div>
+  <h2>Game Over</h2>
+  <p>The word was <strong>{{ randomWord }}</strong></p>
+  <div class="result-actions">
+    <button class="btn btn-primary" (click)="showHint()">💡 Hint</button>
+    <button class="btn btn-secondary" (click)="newGame()">Try Again</button>
+  </div>
+</div>
+
+<!-- Statistics Modal -->
+<div *ngIf="showStats()" class="modal-overlay" (click)="toggleStats()">
+  <div class="modal stats-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Statistics</h2>
+      <button class="close-btn" (click)="toggleStats()" aria-label="Close">×</button>
+    </div>
+    <div class="modal-content">
+      <div class="stats-overview">
+        <div class="stat-card">
+          <div class="stat-value">{{ statsService.currentStats().totalGames }}</div>
+          <div class="stat-label">Games</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ statsService.winRate() }}%</div>
+          <div class="stat-label">Win Rate</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ statsService.currentStats().currentStreak }}</div>
+          <div class="stat-label">Current Streak</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ statsService.currentStats().bestStreak }}</div>
+          <div class="stat-label">Best Streak</div>
+        </div>
+      </div>
+      
+      <div class="distribution-section">
+        <h3>Guess Distribution</h3>
+        <div class="distribution-chart">
+          <div *ngFor="let count of statsService.currentStats().guessDistribution; let i = index" class="distribution-row">
+            <span class="guess-number">{{ i + 1 }}</span>
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="getBarWidth(count)"></div>
+            </div>
+            <span class="guess-count">{{ count }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Simple Share Modal -->
+<div *ngIf="showShareModal()" class="modal-overlay" (click)="showShareModal.set(false)">
+  <div class="modal share-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Share Result</h2>
+      <button class="close-btn" (click)="showShareModal.set(false)" aria-label="Close">×</button>
+    </div>
+    <div class="modal-content">
+      <p>Share your result with friends!</p>
+      <div class="share-actions">
+        <button class="btn btn-primary" (click)="shareResult()">Share</button>
+        <button class="btn btn-secondary" (click)="newGame()">New Game</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Simple Help -->
+<div class="game-help">
+  <small>Press <kbd>Enter</kbd> to submit • <kbd>Esc</kbd> for new game</small>
+</div>

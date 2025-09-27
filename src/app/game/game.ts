@@ -1,7 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, Inject, PLATFORM_ID } from '@angular/core';
 import { WordService } from '../services/word';
+import { GameStatsService } from '../services/game-stats.service';
+import { ThemeService } from '../services/theme.service';
+import { ShareService, GameResult } from '../services/share.service';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-game',
@@ -18,27 +21,56 @@ export class Game implements OnInit, OnDestroy {
   randomWord = '';
   currentRow = 0;
   gameWon = false;
+  gameLost = false;
+  isLoading = signal(true);
+  showStats = signal(false);
+  showShareModal = signal(false);
+  
   guesses: string[][] = Array.from({ length: this.rows }, () => Array(this.wordLength).fill(''));
   statuses: ('correct' | 'present' | 'absent' | '')[][] = Array.from({ length: this.rows }, () => Array(this.wordLength).fill(''));
+  guessHistory: Array<{ guess: string; results: Array<'correct' | 'present' | 'absent'> }> = [];
 
-  constructor(private wordService: WordService) {
-    this.wordService.getRandomWord()
-      .subscribe(w => {
-        this.randomWord = w.toUpperCase();
-      });
+  // Computed properties
+  readonly canShare = computed(() => this.gameWon || this.gameLost);
+
+  constructor(
+    private wordService: WordService,
+    protected statsService: GameStatsService,
+    private themeService: ThemeService,
+    private shareService: ShareService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.loadNewWord();
+  }
+
+  get currentTheme() {
+    return this.themeService.currentTheme();
   }
 
   ngOnInit(): void {
-    window.addEventListener('keydown', this.keyListener);
+    if (isPlatformBrowser(this.platformId)) {
+      window.addEventListener('keydown', this.keyListener);
+    }
   }
 
   ngOnDestroy(): void {
-    window.removeEventListener('keydown', this.keyListener);
+    if (isPlatformBrowser(this.platformId)) {
+      window.removeEventListener('keydown', this.keyListener);
+    }
   }
 
   keyListener = (event: KeyboardEvent) => {
-    if (event.key === 'Enter' && this.currentRow < this.rows && !this.gameWon) {
-      this.checkWordExists();
+    if (this.gameWon || this.gameLost) return;
+    
+    switch(event.key) {
+      case 'Enter':
+        if (this.currentRow < this.rows) {
+          this.checkWordExists();
+        }
+        break;
+      case 'Escape':
+        this.newGame();
+        break;
     }
   };
 
@@ -54,18 +86,20 @@ export class Game implements OnInit, OnDestroy {
     this.guesses[row][col] = char;
     input.value = ''; // Clear input visually
 
-    setTimeout(() => {
-      if (col < this.wordLength - 1) {
-        const allInputs = document.querySelectorAll('.letter-cell') as NodeListOf<HTMLInputElement>;
-        const currentIndex = row * this.wordLength + col;
-        const nextInput = allInputs[currentIndex + 1];
-        nextInput?.focus();
-      }
-    }, 0);
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => {
+        if (col < this.wordLength - 1) {
+          const allInputs = document.querySelectorAll('.letter-cell') as NodeListOf<HTMLInputElement>;
+          const currentIndex = row * this.wordLength + col;
+          const nextInput = allInputs[currentIndex + 1];
+          nextInput?.focus();
+        }
+      }, 0);
+    }
   }
 
   onKeyDown(event: KeyboardEvent, row: number, col: number): void {
-    if (this.gameWon) {
+    if (this.gameWon || this.gameLost) {
       event.preventDefault();
       return;
     }
@@ -73,49 +107,151 @@ export class Game implements OnInit, OnDestroy {
     if (event.key === 'Backspace') {
       this.guesses[row][col] = '';
 
-      const allInputs = document.querySelectorAll('.letter-cell') as NodeListOf<HTMLInputElement>;
-      const currentIndex = row * this.wordLength + col;
-      const prevInput = allInputs[currentIndex - 1];
-      prevInput?.focus();
+      if (isPlatformBrowser(this.platformId)) {
+        const allInputs = document.querySelectorAll('.letter-cell') as NodeListOf<HTMLInputElement>;
+        const currentIndex = row * this.wordLength + col;
+        const prevInput = allInputs[currentIndex - 1];
+        prevInput?.focus();
+      }
 
       event.preventDefault();
+    }
+
+    if (event.key === 'Enter' && row === this.currentRow) {
+      event.preventDefault();
+      this.checkWordExists();
     }
   }
 
   checkWordExists() {
+    // Prevent multiple calls
+    if (this.gameWon || this.gameLost) {
+      return;
+    }
+
     const guess = this.guesses[this.currentRow].join('');
     if (guess.length !== this.wordLength) {
       alert(`Please enter a ${this.wordLength}-letter word.`);
       return;
     }
 
-    this.wordService.validateWord(guess.toLowerCase()).subscribe(valid => {
+    // Mark that we're checking this row to prevent duplicate calls
+    const currentRowIndex = this.currentRow;
+    
+    this.wordService.validateWord(guess.toLowerCase()).subscribe((valid: boolean) => {
       if (!valid) {
         alert(`"${guess}" is not a valid word.`);
       } else {
-        this.checkIfCorrect(guess);
+        // Double check we're still on the same row
+        if (currentRowIndex === this.currentRow && !this.gameWon && !this.gameLost) {
+          this.checkIfCorrect(guess);
+        }
       }
     });
   }
 
   checkIfCorrect(guess: string) {
     const target = this.randomWord;
+    const results: Array<'correct' | 'present' | 'absent'> = [];
+    const currentRowIndex = this.currentRow;
+    
+    // Create a new statuses array to ensure proper change detection
+    const newStatuses = [...this.statuses];
+    
     for (let i = 0; i < this.wordLength; i++) {
       const c = guess[i];
-      this.statuses[this.currentRow][i] =
-        c === target[i] ? 'correct'
-      : target.includes(c) ? 'present'
-      : 'absent';
+      const status = c === target[i] ? 'correct' : target.includes(c) ? 'present' : 'absent';
+      newStatuses[currentRowIndex][i] = status;
+      results.push(status);
     }
+    
+    // Update the statuses array
+    this.statuses = newStatuses;
+
+    // Record this guess in history
+    this.guessHistory.push({ guess, results });
 
     if (guess === target) {
-      alert(`🎉 Correct! The word was ${target}`);
       this.gameWon = true;
+      this.statsService.recordGame(this.currentRow + 1, true);
+      setTimeout(() => this.showShareModal.set(true), 1000);
     } else {
-      this.currentRow = Math.min(this.currentRow + 1, this.rows - 1);
-      if (this.currentRow === this.rows - 1) {
-        alert(`❌ Game over! The word was ${target}`);
+      // Move to next row
+      this.currentRow = this.currentRow + 1;
+      
+      // Check if we've used all 6 rows
+      if (this.currentRow >= this.rows) {
+        this.gameLost = true;
+        this.statsService.recordGame(this.rows, false);
+        setTimeout(() => this.showShareModal.set(true), 1000);
       }
     }
+  }
+
+  newGame(): void {
+    this.currentRow = 0;
+    this.gameWon = false;
+    this.gameLost = false;
+    this.showShareModal.set(false);
+    this.guesses = Array.from({ length: this.rows }, () => Array(this.wordLength).fill(''));
+    this.statuses = Array.from({ length: this.rows }, () => Array(this.wordLength).fill(''));
+    this.guessHistory = [];
+    this.loadNewWord();
+  }
+
+  toggleStats(): void {
+    this.showStats.update((show: boolean) => !show);
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
+
+  shareResult(): void {
+    const gameResult: GameResult = {
+      gameNumber: this.statsService.currentStats().totalGames,
+      guesses: this.currentRow + 1,
+      maxGuesses: this.rows,
+      won: this.gameWon,
+      word: this.randomWord,
+      guessResults: this.guessHistory
+    };
+
+    this.shareService.shareNative(gameResult);
+  }
+
+  showHint(): void {
+    // Show a hint about the word
+    const hints = [
+      `The word starts with "${this.randomWord[0]}"`,
+      `The word ends with "${this.randomWord[this.randomWord.length - 1]}"`,
+      `The word contains "${this.randomWord[Math.floor(Math.random() * this.randomWord.length)]}"`,
+      `The word has ${this.randomWord.length} letters`,
+      `Try thinking of ${this.randomWord.toLowerCase()} words!`
+    ];
+    
+    const randomHint = hints[Math.floor(Math.random() * hints.length)];
+    alert(`💡 Hint: ${randomHint}`);
+  }
+
+  getBarWidth(count: number): number {
+    const max = Math.max(...this.statsService.currentStats().guessDistribution);
+    return max > 0 ? (count / max) * 100 : 0;
+  }
+
+  private loadNewWord(): void {
+    this.isLoading.set(true);
+    this.wordService.getRandomWord()
+      .subscribe({
+        next: (word: string) => {
+          this.randomWord = word.toUpperCase();
+          this.isLoading.set(false);
+        },
+        error: (error: any) => {
+          console.error('Failed to load word:', error);
+          this.isLoading.set(false);
+          // Could implement fallback word list here
+        }
+      });
   }
 }
