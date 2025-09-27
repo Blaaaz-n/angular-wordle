@@ -1,13 +1,7 @@
 <!-- Clean Header -->
 <header class="game-header">
   <div class="header-content">
-    <div class="logo-container">
-      <div class="matrix-cat-logo">
-        <div class="cat-face">😸</div>
-        <div class="headphones">🎧</div>
-      </div>
-      <h1>WORDLE</h1>
-    </div>
+    <h1>WORDLE</h1>
     <div class="header-actions">
       <button class="action-btn theme-btn" (click)="toggleTheme()" [attr.aria-label]="'Switch to ' + (currentTheme === 'dark' ? 'light' : 'dark') + ' theme'">
         <span class="icon">{{ currentTheme === 'dark' ? '☀️' : '🌙' }}</span>
