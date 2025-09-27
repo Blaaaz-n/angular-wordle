@@ -2,6 +2,12 @@
 
 A modern, feature-rich Wordle clone built with Angular 20, showcasing advanced frontend development skills and modern web technologies. Perfect for demonstrating expertise in responsive design, state management, and user experience optimization.
 
+## 🚀 Live Demo
+
+**🎮 [Play Now - wordle-blaaaz.netlify.app](https://wordle-blaaaz.netlify.app)**
+
+Experience the full game with all features including dark/light themes, statistics tracking, and responsive design.
+
 ## ✨ Features
 
 ### 🎯 Core Gameplay
@@ -66,6 +72,9 @@ A modern, feature-rich Wordle clone built with Angular 20, showcasing advanced f
 
 4. **Open your browser**
    Navigate to `http://localhost:4200/`
+
+### 🌐 Or Try the Live Demo
+**🎮 [wordle-blaaaz.netlify.app](https://wordle-blaaaz.netlify.app)** - No installation required!
 
 ## 🎮 How to Play
 
@@ -250,6 +259,8 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 📞 Contact
 
 For questions or feedback, feel free to reach out or open an issue!
+
+**🎮 [Live Demo](https://wordle-blaaaz.netlify.app) | 📁 [GitHub Repository](https://github.com/Blaaaz-n/angular-wordle)**
 
 ---
 
