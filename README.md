@@ -15,6 +15,7 @@ A modern, feature-rich Wordle clone built with Angular 20, showcasing advanced f
 - **Fully Responsive Design** - Optimized for all screen sizes (360px to 1200px+)
 - **Zero Horizontal Scrolling** - Perfect viewport management across all devices
 - **Clean, Minimal Interface** - Modern design with excellent contrast and readability
+- **Animated Matrix Cat Logo** - Unique CSS-animated logo with Matrix-style effects and headphones
 - **Accessibility First** - ARIA labels, keyboard shortcuts, and screen reader support
 
 ### 📊 Advanced Features
@@ -101,6 +102,13 @@ src/
 
 ## 🎨 Design Features
 
+### Unique Logo Design
+- **Matrix Cat Logo**: Custom CSS-animated logo featuring a cat with headphones
+- **Matrix Effects**: Animated green digital rain background with scrolling binary code
+- **Glowing Animation**: Pulsing green glow effect with Matrix-style aesthetics
+- **Headphone Bounce**: Subtle animation on the headphones for added personality
+- **Responsive Scaling**: Logo adapts to different screen sizes (60px → 48px → 40px)
+
 ### Responsive Breakpoints
 - **Extra Large (1200px+)**: Enhanced layout with larger elements
 - **Large (768px-1199px)**: Standard desktop experience
@@ -165,6 +173,12 @@ ng serve --configuration production
 - **Better User Experience** - Optimized for each screen size
 - **Modern Web Standards** - Follows current best practices
 
+### Why CSS-Only Animations?
+- **Performance** - No JavaScript overhead for animations
+- **Lightweight** - Pure CSS animations are more efficient
+- **Customizable** - Easy to modify colors, timing, and effects
+- **Cross-Browser** - CSS animations work consistently everywhere
+
 ### Why Hybrid API Approach?
 - **Reliability** - Fallback to local word list if APIs fail
 - **Performance** - Fast local validation with API backup
@@ -174,6 +188,7 @@ ng serve --configuration production
 
 - **CSS Variables** - Efficient theme switching without re-renders
 - **Signal-Based State** - Minimal change detection overhead
+- **CSS Animations** - Hardware-accelerated animations for smooth performance
 - **Responsive Images** - Optimized loading for different screen densities
 - **Lazy Loading** - Components loaded on demand
 - **Bundle Optimization** - Tree shaking and code splitting
@@ -247,7 +262,9 @@ This project demonstrates expertise in:
 - **Modern Angular Development** - Latest features and best practices
 - **Responsive Design** - Mobile-first approach with perfect scaling
 - **State Management** - Signals, services, and reactive patterns
+- **CSS Animations** - Custom animations with Matrix-style effects
 - **User Experience** - Accessibility, performance, and usability
 - **API Integration** - External services with fallback strategies
 - **Testing** - Comprehensive unit test coverage
 - **Performance Optimization** - Bundle size and runtime efficiency
+- **Creative Design** - Unique branding with animated logo elements
